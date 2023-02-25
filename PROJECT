@@ -11,6 +11,7 @@ resources:
 - api:
     crdVersion: v1
     namespaced: true
+  controller: true
   domain: my.domain
   group: batch
   kind: CronJob

@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	batchv1 "my.domain/cronkapi/api/v1"
+	"my.domain/cronkapi/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -88,6 +89,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controller.CronJobReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CronJob")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
