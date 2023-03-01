@@ -18,12 +18,13 @@ package v1
 
 import (
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NOTE: json tags are required.  Any new fields that is added must have json tags for the fields to be serialized.
 
-// CronJobSpec defines the desired state of CronJob
+// CronJobSpec defines the desired state of CronJob, any “inputs” to our controller go here
 type CronJobSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -80,10 +81,17 @@ const (
 	ReplaceConcurrent ConcurrencyPolicy = "Replace"
 )
 
-// CronJobStatus defines the observed state of CronJob
+// CronJobStatus defines the observed state of CronJob contains any information we want users or other controllers to be able to easily obtain
 type CronJobStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Returns slice of active jobs running at the moment
+	// +optional
+	ActiveJobs []corev1.ObjectReference `json:"activeJobs,omitempty"`
+
+	// Returns last time when the job was successfully scheduled
+	// +optional
+	LastSuccessScheduleTime *metav1.Time `json:"lastSuccessScheduleTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true
