@@ -17,25 +17,81 @@ limitations under the License.
 package v1
 
 import (
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// NOTE: json tags are required.  Any new fields that is added must have json tags for the fields to be serialized.
 
-// CronJobSpec defines the desired state of CronJob
+// CronJobSpec defines the desired state of CronJob, any “inputs” to our controller go here
 type CronJobSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of CronJob. Edit cronjob_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Represents schedule in Cron format
+	//+kubebuilder:validation:MinLength=0
+	//👆this indicates that the minimum string length of the Schedule field should be 0
+	Schedule string `json:"schedule"`
+
+	//This is an optional field. It tells the contoller to start the job within the deadline seconds if it misses the
+	//scheduled time. Missed job executions are counted as failed.
+	//+kubebuilder:validation:Minium=0
+	//👆this indicates that the minimum number of seconds that the StartingDeadlineSeconds can accept should be 0
+	// +optional
+	StartingDeadlineSeconds *int64 `json:"startingDeadlineSeconds,omitempty"`
+
+	//This is an optional field. It tells the controller how to treat the execution of Jobs.
+	//Refer ConcurrencyPolicy type below
+	// +optional
+	ConcurrencyPolicy ConcurrencyPolicy `json:"concurrencyPolicy,omitempty"`
+
+	//This is an optional field. It tells the controller to suspend subsequent executions. Does not apply to
+	//already executed job. Defaults to false.
+	// +optional
+	Suspend *bool `json:"suspend,omitempty"`
+
+	//This specfies the job that will be created when executing a CronJob
+	//+kubebuilder:validation:Minium=0
+	JobTemplate batchv1.JobTemplateSpec `json:"jobTemplate"`
+
+	// The number of successful finished jobs to retain.
+	//+kubebuilder:validation:Minium=0
+	// +optional
+	SuccessfulJobsHistoryLimit *int32 `json:"successfulJobsHistoryLimit,omitempty"`
+
+	// The number of failed finished jobs to retain.
+	// +optional
+	FailedJobsHistoryLimit *int32 `json:"failedJobsHistoryLimit,omitempty"`
 }
 
-// CronJobStatus defines the observed state of CronJob
+// ConcurrencyPolicy supports 3 types:
+// AllowConcurrent: allows concurrent running of CronJons
+// ForbidConcurrent: forbids concurrent running of CronJons
+// ReplaceConcurrent: cancels currently running CronJon and replaces it with new one.
+// Default is AllowConcurrent
+// +kubebuilder:validation:Enum=Allow;Forbid;Replace
+// 👆this marker tells the controller-tools this field acceots either of the abpve 3 values
+type ConcurrencyPolicy string
+
+const (
+	AllowConcurrent ConcurrencyPolicy = "Allow"
+
+	ForbidConcurrent ConcurrencyPolicy = "Forbid"
+
+	ReplaceConcurrent ConcurrencyPolicy = "Replace"
+)
+
+// CronJobStatus defines the observed state of CronJob contains any information we want users or other controllers to be able to easily obtain
 type CronJobStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Returns slice of active jobs running at the moment
+	// +optional
+	ActiveJobs []corev1.ObjectReference `json:"activeJobs,omitempty"`
+
+	// Returns last time when the job was successfully scheduled
+	// +optional
+	LastSuccessScheduleTime *metav1.Time `json:"lastSuccessScheduleTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true
